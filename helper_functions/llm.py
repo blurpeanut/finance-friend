@@ -9,6 +9,7 @@ import glob
 import re
 import streamlit as st
 from typing import List, Tuple, Optional
+from pathlib import Path
 
 from dotenv import load_dotenv
 
@@ -110,37 +111,55 @@ def _split_documents(documents: List[Document]) -> List[Document]:
     )
     return splitter.split_documents(documents)
 
+# Cloud-safe Chroma directory
+CHROMA_DIR = Path("/tmp/finance_friend/chroma")
+CHROMA_DIR.mkdir(parents=True, exist_ok=True)  # make sure it exists
+
 _vectordb: Optional[Chroma] = None
+_COLLECTION = "finance_policies"  # keep this consistent
 
 def _ensure_vectordb() -> Chroma:
     global _vectordb
     if _vectordb is not None:
         return _vectordb
-    os.makedirs(CHROMA_DIR, exist_ok=True)
+
+    # 2) Try to load existing persisted collection from /tmp
     try:
-        db = Chroma(persist_directory=CHROMA_DIR, embedding_function=embeddings)
+        db = Chroma(
+            persist_directory=str(CHROMA_DIR),      # cast to str
+            embedding_function=embeddings,
+            collection_name=_COLLECTION,            # same name used when building
+        )
+        # If collection exists but is empty, rebuild
         if hasattr(db, "_collection") and getattr(db._collection, "count", None):
             if db._collection.count() == 0:
                 raise ValueError("Empty Chroma collection; rebuild.")
         _vectordb = db
         return _vectordb
     except Exception:
+        # fall through to rebuild
         pass
+
+    # 3) Build from source docs, then persist under /tmp
     raw_docs = _load_policy_documents(POLICY_FOLDER)
     if not raw_docs:
         raise RuntimeError(f"No policy documents found in '{POLICY_FOLDER}'. Add .pdf or .docx files and retry.")
     chunks = _split_documents(raw_docs)
+
     _vectordb = Chroma.from_documents(
         documents=chunks,
         embedding=embeddings,
-        persist_directory=CHROMA_DIR,
-        collection_name="finance_policies",
+        persist_directory=str(CHROMA_DIR),         # cast to str
+        collection_name=_COLLECTION,
     )
     return _vectordb
 
 def _retrieve_chunks(query: str, k: int = RETRIEVER_K) -> List[Document]:
     db = _ensure_vectordb()
-    retriever = db.as_retriever(search_type=RETRIEVER_SEARCH_TYPE, search_kwargs={"k": k, "fetch_k": max(10, k * 3)})
+    retriever = db.as_retriever(
+        search_type=RETRIEVER_SEARCH_TYPE,
+        search_kwargs={"k": k, "fetch_k": max(10, k * 3)},
+    )
     return retriever.get_relevant_documents(query)
 
 def _format_doc_snippet(doc: Document, idx: int) -> str:
