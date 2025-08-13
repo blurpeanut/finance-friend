@@ -1,0 +1,19 @@
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+.env
+
+# Secret
+.streamlit/
+secrets.toml
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.pyc
+
+# Vector database files
+vector_db/
+*.bin
+*.sqlite3
