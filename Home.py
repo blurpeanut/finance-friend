@@ -1,13 +1,6 @@
 # ====================
 # IMPORTS
 # ====================
-try:
-    import pysqlite3  # provides a modern SQLite
-    import sys
-    sys.modules["sqlite3"] = pysqlite3  # make python import this as sqlite3
-except Exception:
-    pass  # fall back; Chroma will still try but this usually fixes it
-
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
