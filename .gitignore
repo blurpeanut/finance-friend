@@ -5,9 +5,14 @@ ENV/
 .venv/
 .env
 
-# Secret
-.streamlit/
-secrets.toml
+# Ignore all files in .streamlit folder
+.streamlit/*
+
+# Unignore config.toml so it gets committed
+!.streamlit/config.toml
+
+# Still ignore secrets.toml
+.streamlit/secrets.toml
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
