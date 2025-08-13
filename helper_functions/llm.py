@@ -7,6 +7,7 @@ from __future__ import annotations
 import os
 import glob
 import re
+import streamlit as st
 from typing import List, Tuple, Optional
 
 from dotenv import load_dotenv
@@ -52,7 +53,7 @@ SYSTEM_MESSAGE_TEMPLATE = (
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 if not OPENAI_API_KEY:
-    raise RuntimeError("OPENAI_API_KEY not found. Ensure it's set in your .env file.")
+    OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
 
 embeddings = OpenAIEmbeddings(model=EMBEDDING_MODEL)
 llm = ChatOpenAI(model=CHAT_MODEL, temperature=0)
