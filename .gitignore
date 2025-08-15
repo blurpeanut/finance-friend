@@ -21,4 +21,3 @@ __pycache__/
 # Vector database files
 vector_db/
 *.bin
-*.sqlite3
